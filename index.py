@@ -7,7 +7,7 @@ import sys, time, select
 # --- Global State ---
 last_update = None
 current_data = None
-TIMEOUT_MINUTES = 30
+TIMEOUT_MINUTES = 0.1
 DISPLAY_WIDTH, DISPLAY_HEIGHT = 320, 240
 
 # Optional backends
@@ -58,6 +58,7 @@ else:
 backend = TFTDisplay() if use_tft else PygameDisplay()
 
 # --- Fonts ---
+font_huge = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
 font_big = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
 font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
 
@@ -105,7 +106,7 @@ def draw_idle():
   return img
 
 # --- Draw Now Playing ---
-def display_album(album, artist, section, cover_img=None):
+def display_album(album, artist, section, code, cover_img=None):
   img = Image.new("RGB", (DISPLAY_WIDTH, DISPLAY_HEIGHT), "black")
   draw = ImageDraw.Draw(img)
   now = datetime.now().strftime("%H:%M")
@@ -119,11 +120,12 @@ def display_album(album, artist, section, cover_img=None):
   draw.text((5, DISPLAY_HEIGHT - 18), "Now Playing", font=font_small, fill="white")
 
   # Left side text
-  y_start = 30
+  y_start = 40
   spacing = 30
-  draw.text((10, y_start), f"Album: {album}", font=font_big, fill="white")
-  draw.text((10, y_start + spacing), f"Artist: {artist}", font=font_big, fill="white")
-  draw.text((10, y_start + 2*spacing), f"Section: {section}", font=font_big, fill="white")
+  draw.text((10, y_start), f"{album}", font=font_big, fill="white")
+  draw.text((10, y_start + spacing), f"{artist}", font=font_big, fill="white")
+  draw.text((10, y_start + 2*spacing), f"{section}", font=font_big, fill="white")
+  draw.text((10, y_start + 4*spacing), f"{code}", font=font_huge, fill="white")
 
   # Right cover image
   if cover_img:
@@ -165,8 +167,8 @@ while running:
     if not current_data:
       backend.display(draw_idle())
     else:
-      album, artist, section, cover_img = current_data
-      backend.display(display_album(album, artist, section, cover_img))
+      album, artist, section, code, cover_img = current_data
+      backend.display(display_album(album, artist, section, code, cover_img))
 
     # Non-blocking input
     if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
@@ -181,9 +183,10 @@ while running:
           album = data.get("title", "Unknown Album")
           artist = data.get("artists", "Unknown Artist")
           section = data.get("section", "N/A")
+          code = data.get("code", "XXXXXX")
           cover_url = f"http://localhost:3021{data.get('cover_path')}"
           cover_img = fetch_cover(cover_url) if cover_url else None
-          current_data = (album, artist, section, cover_img)
+          current_data = (album, artist, section, code, cover_img)
           last_update = datetime.now()
         except Exception as e:
           print(f"Error fetching data: {e}")
