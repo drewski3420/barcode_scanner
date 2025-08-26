@@ -114,8 +114,8 @@ def display_album(album, artist, section, cover_img=None):
   img.paste(top_bar_gradient(20), (0,0))
   draw.text((5, 2), now, font=font_small, fill="white")
 
-  # Bottom bar
-  draw.rectangle([0, DISPLAY_HEIGHT - 20, DISPLAY_WIDTH, DISPLAY_HEIGHT], fill="darkblue")
+  # Bottom bar (gradient)
+  img.paste(top_bar_gradient(20), (0, DISPLAY_HEIGHT - 20))
   draw.text((5, DISPLAY_HEIGHT - 18), "Now Playing", font=font_small, fill="white")
 
   # Left side text
