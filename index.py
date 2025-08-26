@@ -61,6 +61,28 @@ backend = TFTDisplay() if use_tft else PygameDisplay()
 font_big = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
 font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
 
+# Changes: Added top_bar_gradient() and replaced the previous solid 'darkblue' top-bar rectangles
+# with a left-to-right gradient image that is pasted into the main image. This keeps the public
+# function interfaces unchanged and only affects the appearance of the top bar.
+def top_bar_gradient(height, start_color=(0, 34, 85), end_color=(0, 102, 204)):
+  """Return an Image (width=DISPLAY_WIDTH, height=height) with a left-to-right RGB gradient.
+
+  The function constructs the gradient per-column and returns a PIL Image that can be
+  pasted at (0,0) to draw the top bar. Colors are given as RGB tuples; defaults are
+  a dark blue -> lighter blue transition.
+  """
+  grad = Image.new("RGB", (DISPLAY_WIDTH, height), "#000000")
+  start_r, start_g, start_b = start_color
+  end_r, end_g, end_b = end_color
+  for x in range(DISPLAY_WIDTH):
+    ratio = x / (DISPLAY_WIDTH - 1) if DISPLAY_WIDTH > 1 else 0
+    r = int(start_r + (end_r - start_r) * ratio)
+    g = int(start_g + (end_g - start_g) * ratio)
+    b = int(start_b + (end_b - start_b) * ratio)
+    for y in range(height):
+      grad.putpixel((x, y), (r, g, b))
+  return grad
+
 # --- Fetch Cover Image ---
 def fetch_cover(url):
   try:
@@ -77,8 +99,8 @@ def draw_idle():
   img = Image.new("RGB", (DISPLAY_WIDTH, DISPLAY_HEIGHT), "black")
   draw = ImageDraw.Draw(img)
   now = datetime.now().strftime("%H:%M")
-  # Top bar
-  draw.rectangle([0, 0, DISPLAY_WIDTH, 10], fill="darkblue")
+  # Top bar (gradient)
+  img.paste(top_bar_gradient(10), (0,0))
   draw.text((5, 2), now, font=font_small, fill="white")
   return img
 
@@ -88,8 +110,8 @@ def display_album(album, artist, section, cover_img=None):
   draw = ImageDraw.Draw(img)
   now = datetime.now().strftime("%H:%M")
 
-  # Top bar
-  draw.rectangle([0, 0, DISPLAY_WIDTH, 20], fill="darkblue")
+  # Top bar (gradient)
+  img.paste(top_bar_gradient(20), (0,0))
   draw.text((5, 2), now, font=font_small, fill="white")
 
   # Bottom bar
