@@ -1,0 +1,4 @@
+luma.lcd
+requests
+Pillow
+pygame
