@@ -105,6 +105,27 @@ def draw_idle():
   draw.text((5, 2), now, font=font_small, fill="white")
   return img
 
+def fade_to_idle(current_img, steps=10, duration=0.5):
+  """
+  Fade from current_img to the idle screen over `steps` frames spanning `duration` seconds.
+
+  This creates blended intermediate images using PIL.Image.blend and displays each frame
+  via the selected backend. If an error occurs during fading we print it and return.
+  """
+  try:
+    idle_img = draw_idle()
+    # Ensure modes and sizes match
+    if current_img.mode != idle_img.mode or current_img.size != idle_img.size:
+      current_img = current_img.convert(idle_img.mode).resize(idle_img.size)
+
+    for i in range(1, steps + 1):
+      alpha = i / steps
+      blended = Image.blend(current_img, idle_img, alpha)
+      backend.display(blended)
+      time.sleep(duration / steps)
+  except Exception as e:
+    print(f"fade_to_idle error: {e}")
+
 # --- Draw Now Playing ---
 def display_album(album, artist, section, code, cover_img=None):
   img = Image.new("RGB", (DISPLAY_WIDTH, DISPLAY_HEIGHT), "black")
@@ -160,6 +181,13 @@ while running:
     # Timeout
     if current_data and last_update:
       if datetime.now() - last_update > timedelta(minutes=TIMEOUT_MINUTES):
+        # Fade the current display to the idle screen before clearing state
+        try:
+          album, artist, section, code, cover_img = current_data
+          curr_img = display_album(album, artist, section, code, cover_img)
+          fade_to_idle(curr_img)
+        except Exception as e:
+          print(f"Error during fade to idle: {e}")
         current_data = None
         last_update = None
 
