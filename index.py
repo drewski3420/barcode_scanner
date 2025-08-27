@@ -9,7 +9,7 @@ last_update = None
 current_data = None
 TIMEOUT_MINUTES = 0.5
 DISPLAY_WIDTH, DISPLAY_HEIGHT = 320, 240
-
+HOST_URL="http://localhost:3021"
 # Optional backends
 use_tft = False  # Set True when hardware is available
 
@@ -62,9 +62,6 @@ font_huge = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold
 font_big = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
 font_small = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
 
-# Changes: Added top_bar_gradient() and replaced the previous solid 'darkblue' top-bar rectangles
-# with a left-to-right gradient image that is pasted into the main image. This keeps the public
-# function interfaces unchanged and only affects the appearance of the top bar.
 def top_bar_gradient(height, start_color=(0, 34, 85), end_color=(0, 102, 204)):
   """Return an Image (width=DISPLAY_WIDTH, height=height) with a left-to-right RGB gradient.
 
@@ -204,7 +201,7 @@ while running:
       if url:
         try:
           if len(url) == 6:
-            response = requests.get(f"http://localhost:3021/plays/scan/{url}", timeout=5)
+            response = requests.get(f"{HOST_URL}/plays/scan/{url}", timeout=5)
           else:
             response = requests.get(url, timeout=5)
           data = response.json()['record']
@@ -212,7 +209,7 @@ while running:
           artist = data.get("artists", "Unknown Artist")
           section = data.get("section", "N/A")
           code = data.get("code", "XXXXXX")
-          cover_url = f"http://localhost:3021{data.get('cover_path')}"
+          cover_url = f"{HOST_URL}{data.get('cover_path')}"
           cover_img = fetch_cover(cover_url) if cover_url else None
           current_data = (album, artist, section, code, cover_img)
           last_update = datetime.now()
