@@ -7,7 +7,7 @@ import sys, time, select
 # --- Global State ---
 last_update = None
 current_data = None
-TIMEOUT_MINUTES = 0.1
+TIMEOUT_MINUTES = 0.5
 DISPLAY_WIDTH, DISPLAY_HEIGHT = 320, 240
 
 # Optional backends
@@ -152,7 +152,7 @@ def display_album(album, artist, section, code, cover_img=None):
   if cover_img:
     cover_img = cover_img.resize((120, 120))
     x_cover = DISPLAY_WIDTH - 120 - 10
-    y_cover = 40
+    y_cover = 70
 
     # Shadow
     shadow = Image.new("RGB", (cover_img.width + 4, cover_img.height + 4), "grey")
