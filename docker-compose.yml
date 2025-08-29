@@ -1,6 +1,12 @@
 services:
-  scanner:
-    build: .
-    container_name: scanner
+  app:
+    image: drewski3420/barcode_scanner:latest
+    #build: .
+    container_name: barcode_scanner
+    user: 1000:1001
+    volumes:
+      - /etc/localtime:/etc/localtime
     restart: unless-stopped
-
+    environment:
+      - HOST_URL="http://localhost:3021"
+      - USE_TFT=False

@@ -7,8 +7,8 @@ WORKDIR /app
 COPY requirements.txt .
 
 RUN export DEBIAN_FRONTEND=noninteractive && \
-    apt update && \
-    apt install -y wget curl nano ffmpeg \
+    apt-get update && \
+    apt-get install -y wget curl nano ffmpeg \
     build-essential \
     pkg-config \
     libsdl2-dev \
@@ -35,4 +35,4 @@ COPY index.py .
 #RUN chmod 600 /var/spool/cron/crontabs/$APP_USER
 
 #Run it
-ENTRYPOINT ["python3", "/app/flask"]
+ENTRYPOINT ["python3", "/app/index.py"]

@@ -3,15 +3,17 @@ from io import BytesIO
 from datetime import datetime, timedelta
 from PIL import Image, ImageDraw, ImageFont
 import sys, time, select
+import os
+import RPi.GPIO as GPIO
 
 # --- Global State ---
 last_update = None
 current_data = None
 TIMEOUT_MINUTES = 0.5
 DISPLAY_WIDTH, DISPLAY_HEIGHT = 320, 240
-HOST_URL="http://localhost:3021"
+HOST_URL=os.getenv("HOST_URL","http://localhost:3021")
 # Optional backends
-use_tft = False  # Set True when hardware is available
+use_tft = os.getenv("USE_TFT",False)  # Set True when hardware is available
 
 # --- Display Backend Interface ---
 class DisplayBackend:

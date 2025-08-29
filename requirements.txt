@@ -4,4 +4,4 @@ requests
 Pillow
 pygame
 luma
-
+RPi.GPIO
