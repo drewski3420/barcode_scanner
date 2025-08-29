@@ -6,12 +6,13 @@ import sys, time, select
 import os
 import RPi.GPIO as GPIO
 
+os.environ["SDL_AUDIODRIVER"] = "dummy"
 # --- Global State ---
 last_update = None
 current_data = None
 TIMEOUT_MINUTES = 0.5
 DISPLAY_WIDTH, DISPLAY_HEIGHT = 320, 240
-HOST_URL=os.getenv("HOST_URL","http://localhost:3021")
+HOST_URL=os.getenv("HOST_URL","https://records.thejowers.com")
 # Optional backends
 use_tft = os.getenv("USE_TFT",False)  # Set True when hardware is available
 
@@ -86,10 +87,10 @@ def top_bar_gradient(height, start_color=(0, 34, 85), end_color=(0, 102, 204)):
 # --- Fetch Cover Image ---
 def fetch_cover(url):
   try:
-    print(url)
+#    print(url)
     resp = requests.get(url, timeout=5)
 
-    print(resp.status_code)
+#    print(resp.status_code)
     return Image.open(BytesIO(resp.content)).convert("RGB")
   except Exception:
     return None
@@ -199,13 +200,13 @@ while running:
 
     # Non-blocking input
     if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-      url = sys.stdin.readline().strip()
-      if url:
+      var_in = sys.stdin.readline().strip()
+      if var_in:
         try:
-          if len(url) == 6:
-            response = requests.get(f"{HOST_URL}/plays/scan/{url}", timeout=5)
+          if len(var_in) == 6:
+            response = requests.get(f"{HOST_URL}/plays/scan/{var_in}", timeout=5)
           else:
-            response = requests.get(url, timeout=5)
+            response = requests.get(var_in, timeout=5)
           data = response.json()['record']
           album = data.get("title", "Unknown Album")
           artist = data.get("artists", "Unknown Artist")
