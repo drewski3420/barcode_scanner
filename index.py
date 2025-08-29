@@ -149,7 +149,7 @@ def display_album(album, artist, section, code, cover_img=None):
   if cover_img:
     cover_img = cover_img.resize((120, 120))
     x_cover = DISPLAY_WIDTH - 120 - 10
-    y_cover = 70
+    y_cover = 80
 
     # Shadow
     shadow = Image.new("RGB", (cover_img.width + 4, cover_img.height + 4), "grey")
