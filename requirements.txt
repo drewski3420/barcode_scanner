@@ -5,3 +5,4 @@ Pillow
 pygame
 luma
 RPi.GPIO
+evdev

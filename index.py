@@ -1,5 +1,4 @@
-import sys
-import select
+import os
 import time
 from datetime import datetime, timedelta
 
@@ -7,9 +6,12 @@ import config
 from display import create_backend
 import fetcher
 import ui
+import input_hid
 
 # Create display backend once at runtime
 backend = create_backend()
+# Create HID scanner once at runtime (device path via HID_DEVICE env var)
+scanner = input_hid.HIDScanner(device_path=os.getenv("HID_DEVICE", None))
 
 def run_main_loop():
   print("Ready! Type a URL and press Enter (simulating QR scan)...")
@@ -44,17 +46,20 @@ def run_main_loop():
         album, artist, section, code, cover_img = current_data
         backend.display(ui.display_album(album, artist, section, code, cover_img))
 
-      # Non-blocking input from stdin (simulating QR scanner)
-      if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-        var_in = sys.stdin.readline().strip()
-        if var_in:
-          rec = fetcher.fetch_record(var_in)
-          if rec:
-            current_data = (rec.title, rec.artists, rec.section, rec.code, rec.cover_img)
-            last_update = datetime.now()
-          else:
-            print("Failed to fetch record for input:", var_in)
-            current_data = None
+      # Non-blocking input from HID scanner
+      try:
+        var_in = scanner.get_scan_nowait()
+      except Exception as e:
+        var_in = None
+
+      if var_in:
+        rec = fetcher.fetch_record(var_in)
+        if rec:
+          current_data = (rec.title, rec.artists, rec.section, rec.code, rec.cover_img)
+          last_update = datetime.now()
+        else:
+          print("Failed to fetch record for input:", var_in)
+          current_data = None
 
       time.sleep(0.1)
   except KeyboardInterrupt:
