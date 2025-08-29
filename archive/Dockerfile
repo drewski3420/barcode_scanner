@@ -24,7 +24,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
 RUN pip3 install --upgrade pip setuptools wheel
 RUN pip3 install -r requirements.txt
 
-COPY index.py .
+COPY *.py .
 
 ##Create user and crontab
 #RUN groupadd --gid 1001 appgroup && \

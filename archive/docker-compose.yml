@@ -1,7 +1,7 @@
 services:
   app:
-    image: drewski3420/barcode_scanner:latest
-    #build: .
+    #image: drewski3420/barcode_scanner:latest
+    build: .
     container_name: barcode_scanner
     user: 1000:1001
     volumes:

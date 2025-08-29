@@ -1,16 +1,3 @@
-"""
-index.py (refactored)
-Thin entrypoint that wires together the config, display backend, fetcher, and UI.
-
-This version moves responsibilities into:
-- config.py
-- display.py
-- fetcher.py
-- ui.py
-- model.py
-
-Only orchestration and the main loop remain here so the pieces are easier to test and swap.
-"""
 import sys
 import select
 import time
@@ -24,64 +11,63 @@ import ui
 # Create display backend once at runtime
 backend = create_backend()
 
-
 def run_main_loop():
-    print("Ready! Type a URL and press Enter (simulating QR scan)...")
-    running = True
-    current_data = None
-    last_update = None
+  print("Ready! Type a URL and press Enter (simulating QR scan)...")
+  running = True
+  current_data = None
+  last_update = None
 
+  try:
+    while running:
+      # Handle pygame events if applicable
+      if not config.USE_TFT and hasattr(backend, "pygame"):
+        for event in backend.pygame.event.get():
+          if event.type == backend.pygame.QUIT:
+            running = False
+
+      # Timeout handling: fade to idle and clear state
+      if current_data and last_update:
+        if datetime.now() - last_update > timedelta(minutes=config.TIMEOUT_MINUTES):
+          try:
+            album, artist, section, code, cover_img = current_data
+            curr_img = ui.display_album(album, artist, section, code, cover_img)
+            ui.fade_to_idle(curr_img, backend)
+          except Exception as e:
+            print(f"Error during fade to idle: {e}")
+          current_data = None
+          last_update = None
+
+      # Draw current or idle
+      if not current_data:
+        backend.display(ui.draw_idle())
+      else:
+        album, artist, section, code, cover_img = current_data
+        backend.display(ui.display_album(album, artist, section, code, cover_img))
+
+      # Non-blocking input from stdin (simulating QR scanner)
+      if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+        var_in = sys.stdin.readline().strip()
+        if var_in:
+          rec = fetcher.fetch_record(var_in)
+          if rec:
+            current_data = (rec.title, rec.artists, rec.section, rec.code, rec.cover_img)
+            last_update = datetime.now()
+          else:
+            print("Failed to fetch record for input:", var_in)
+            current_data = None
+
+      time.sleep(0.1)
+  except KeyboardInterrupt:
+    pass
+  except Exception as e:
+    print(f"Error in main loop: {e}")
+  finally:
+    # Ensure backend cleanup if provided
     try:
-        while running:
-            # Handle pygame events if applicable
-            if not config.USE_TFT and hasattr(backend, "pygame"):
-                for event in backend.pygame.event.get():
-                    if event.type == backend.pygame.QUIT:
-                        running = False
-
-            # Timeout handling: fade to idle and clear state
-            if current_data and last_update:
-                if datetime.now() - last_update > timedelta(minutes=config.TIMEOUT_MINUTES):
-                    try:
-                        album, artist, section, code, cover_img = current_data
-                        curr_img = ui.display_album(album, artist, section, code, cover_img)
-                        ui.fade_to_idle(curr_img, backend)
-                    except Exception as e:
-                        print(f"Error during fade to idle: {e}")
-                    current_data = None
-                    last_update = None
-
-            # Draw current or idle
-            if not current_data:
-                backend.display(ui.draw_idle())
-            else:
-                album, artist, section, code, cover_img = current_data
-                backend.display(ui.display_album(album, artist, section, code, cover_img))
-
-            # Non-blocking input from stdin (simulating QR scanner)
-            if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-                var_in = sys.stdin.readline().strip()
-                if var_in:
-                    rec = fetcher.fetch_record(var_in)
-                    if rec:
-                        current_data = (rec.title, rec.artists, rec.section, rec.code, rec.cover_img)
-                        last_update = datetime.now()
-                    else:
-                        print("Failed to fetch record for input:", var_in)
-                        current_data = None
-
-            time.sleep(0.1)
-    except KeyboardInterrupt:
-        pass
-    except Exception as e:
-        print(f"Error in main loop: {e}")
-    finally:
-        # Ensure backend cleanup if provided
-        try:
-            backend.quit()
-        except Exception:
-            pass
+      backend.quit()
+    except Exception:
+      pass
 
 
 if __name__ == "__main__":
-    run_main_loop()
+  run_main_loop()
