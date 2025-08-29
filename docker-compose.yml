@@ -1,0 +1,6 @@
+services:
+  scanner:
+    build: .
+    container_name: scanner
+    restart: unless-stopped
+
