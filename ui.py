@@ -11,7 +11,7 @@ def load_font(path: str, size: int):
 
 
 font_huge = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
-font_big = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 16)
+font_big = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
 font_small = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
 
 def top_bar_gradient(height, start_color=(0, 34, 85), end_color=(0, 102, 204)):
