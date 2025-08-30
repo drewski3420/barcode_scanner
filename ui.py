@@ -14,6 +14,26 @@ font_huge = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28
 font_big = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
 font_small = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
 
+def _text_size(draw, text, font):
+  """Return (width, height) for text using available PIL APIs.
+
+  Prefer ImageDraw.textsize(draw) where available. Fall back to font.getbbox()
+  (returns (x0,y0,x1,y1)) or font.getmask().size. As a final fallback,
+  approximate using len(text) * font.size.
+  """
+  try:
+    return draw.textsize(text, font=font)
+  except Exception:
+    try:
+      bbox = font.getbbox(text)
+      return (bbox[2] - bbox[0], bbox[3] - bbox[1])
+    except Exception:
+      try:
+        mask = font.getmask(text)
+        return mask.size
+      except Exception:
+        return (len(text) * getattr(font, "size", 10), getattr(font, "size", 10))
+
 def top_bar_gradient(height, start_color=(0, 34, 85), end_color=(0, 102, 204)):
   """Return a left-to-right RGB gradient PIL Image of width DISPLAY_WIDTH and given height."""
   grad = Image.new("RGB", (config.DISPLAY_WIDTH, height), "#000000")
@@ -67,10 +87,7 @@ def display_album(album, artist, section, code, cover_img=None):
   draw.text((5, config.DISPLAY_HEIGHT - 18), "Now Playing", font=font_small, fill="white")
   # draw section on the right side of the bottom bar
   section_text = f"{section}"
-  try:
-    text_w, text_h = draw.textsize(section_text, font=font_small)
-  except Exception:
-    text_w = font_small.getsize(section_text)[0]
+  text_w, text_h = _text_size(draw, section_text, font_small)
   draw.text((config.DISPLAY_WIDTH - 10 - text_w, config.DISPLAY_HEIGHT - 18), section_text, font=font_small, fill="white")
   y_start = 40
   spacing = 30
