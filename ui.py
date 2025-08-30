@@ -65,11 +65,17 @@ def display_album(album, artist, section, code, cover_img=None):
   draw.text((5, 2), now, font=font_small, fill="white")
   img.paste(top_bar_gradient(20), (0, config.DISPLAY_HEIGHT - 20))
   draw.text((5, config.DISPLAY_HEIGHT - 18), "Now Playing", font=font_small, fill="white")
+  # draw section on the right side of the bottom bar
+  section_text = f"{section}"
+  try:
+    text_w, text_h = draw.textsize(section_text, font=font_small)
+  except Exception:
+    text_w = font_small.getsize(section_text)[0]
+  draw.text((config.DISPLAY_WIDTH - 10 - text_w, config.DISPLAY_HEIGHT - 18), section_text, font=font_small, fill="white")
   y_start = 40
   spacing = 30
   draw.text((10, y_start), f"{album}", font=font_big, fill="white")
   draw.text((10, y_start + spacing), f"{artist}", font=font_big, fill="white")
-  draw.text((10, y_start + 2 * spacing), f"{section}", font=font_big, fill="white")
   draw.text((10, y_start + 4 * spacing), f"{code}", font=font_huge, fill="white")
 
   if cover_img:
