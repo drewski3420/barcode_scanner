@@ -1,46 +1,56 @@
 import spidev, RPi.GPIO as GPIO, time
 
-# --- Pin setup (based on your wiring) ---
+# --- Pin setup ---
 GPIO.setmode(GPIO.BCM)
-DC = 22    # Data/Command
-RST = 25   # Reset
-CS = 24    # Chip Select
+DC = 22
+RST = 25
+CS = 24
 GPIO.setup(DC, GPIO.OUT)
 GPIO.setup(RST, GPIO.OUT)
 GPIO.setup(CS, GPIO.OUT)
 
 # --- SPI setup ---
 spi = spidev.SpiDev()
-spi.open(0, 0)           # SPI bus 0, device CE0
+spi.open(0, 0)
 spi.max_speed_hz = 40000000
 spi.mode = 0
 
-# --- Reset the display ---
-GPIO.output(RST, 1); time.sleep(0.1)
-GPIO.output(RST, 0); time.sleep(0.1)
-GPIO.output(RST, 1); time.sleep(0.1)
+# --- Reset display ---
+GPIO.output(RST,1); time.sleep(0.1)
+GPIO.output(RST,0); time.sleep(0.1)
+GPIO.output(RST,1); time.sleep(0.1)
 
-# --- Initialization sequence ---
-GPIO.output(DC, 0); spi.writebytes([0x01]); time.sleep(0.15)   # SWRESET
-GPIO.output(DC, 0); spi.writebytes([0x11]); time.sleep(0.12)   # SLPOUT
-GPIO.output(DC, 0); spi.writebytes([0x3A]); GPIO.output(DC,1); spi.writebytes([0x55])  # COLMOD: 16-bit color
-GPIO.output(DC, 0); spi.writebytes([0x29]); time.sleep(0.1)    # DISPON
+# --- Minimal init ---
+GPIO.output(DC, 0); spi.writebytes([0x01]); time.sleep(0.15)  # SWRESET
+GPIO.output(DC, 0); spi.writebytes([0x11]); time.sleep(0.12)  # SLPOUT
+GPIO.output(DC, 0); spi.writebytes([0x3A]); GPIO.output(DC,1); spi.writebytes([0x55])  # 16-bit color
+GPIO.output(DC, 0); spi.writebytes([0x29]); time.sleep(0.1)  # DISPON
 
-# --- Set column range (0-9 for 10 pixels) ---
-GPIO.output(DC, 0); spi.writebytes([0x2A])                     # CASET
-GPIO.output(DC, 1); spi.writebytes([0x00,0x00, 0x00,0x09])
+# --- Test combinations ---
+madctl_values = [0x00, 0x60, 0xC0]          # common rotation/RGB orders
+row_offsets = [0x00, 0x60]                  # common 240x320 row offsets
 
-# --- Set row range (0-9 for 10 pixels) ---
-GPIO.output(DC, 0); spi.writebytes([0x2B])                     # RASET
-GPIO.output(DC, 1); spi.writebytes([0x00,0x00, 0x00,0x09])
-
-# --- Memory write ---
-GPIO.output(DC, 0); spi.writebytes([0x2C])                     # RAMWR
-GPIO.output(DC, 1)
-
-# --- Fill the 10x10 area with green (RGB565 0x07E0) ---
-hi, lo = 0x07, 0xE0
-buf = [hi, lo] * 100    # 10x10 pixels
-spi.writebytes(buf)
-
-print("Done! You should see a 10x10 green square in the top-left corner.")
+for madctl in madctl_values:
+    for row_offset in row_offsets:
+        print(f"Testing MADCTL={hex(madctl)}, row_offset={hex(row_offset)}")
+        
+        # Set MADCTL
+        GPIO.output(DC,0); spi.writebytes([0x36])
+        GPIO.output(DC,1); spi.writebytes([madctl])
+        
+        # Column 0-0
+        GPIO.output(DC,0); spi.writebytes([0x2A])
+        GPIO.output(DC,1); spi.writebytes([0x00,0x00,0x00,0x00])
+        
+        # Row 0-0 with offset
+        GPIO.output(DC,0); spi.writebytes([0x2B])
+        GPIO.output(DC,1); spi.writebytes([0x00,row_offset,0x00,row_offset])
+        
+        # Memory write
+        GPIO.output(DC,0); spi.writebytes([0x2C])
+        GPIO.output(DC,1)
+        
+        # Single green pixel
+        spi.writebytes([0x07,0xE0])
+        
+        time.sleep(1)  # wait a second so you can see if pixel appears
