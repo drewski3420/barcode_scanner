@@ -50,4 +50,26 @@ write_data(0x48)  # MX, BGR
 write_cmd(0x11)  # Sleep out
 time.sleep(0.12)
 
-write_cmd(0x2_
+write_cmd(0x29)  # Display ON
+
+# --- Fill screen red ---
+def set_window(x0, y0, x1, y1):
+    write_cmd(0x2A)  # Column addr
+    write_data([x0 >> 8, x0 & 0xFF, x1 >> 8, x1 & 0xFF])
+    write_cmd(0x2B)  # Row addr
+    write_data([y0 >> 8, y0 & 0xFF, y1 >> 8, y1 & 0xFF])
+    write_cmd(0x2C)  # Write RAM
+
+width, height = 240, 320
+set_window(0, 0, width - 1, height - 1)
+
+# Send solid red (RGB565: 0xF800)
+color = [0xF8, 0x00] * width
+GPIO.output(DC_PIN, 1)
+for _ in range(height):
+    spi.xfer2(color)
+
+print("Filled screen red")
+
+spi.close()
+GPIO.cleanup()
