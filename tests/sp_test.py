@@ -2,22 +2,20 @@ import board
 import digitalio
 import busio
 from PIL import Image, ImageDraw, ImageFont
-import adafruit_rgb_display.st7789 as st7789
+import adafruit_st7789
 
 # SPI setup
 spi = busio.SPI(clock=board.SCLK, MOSI=board.MOSI)
-
-# TFT control pins
-cs_pin = digitalio.DigitalInOut(board.CE0)   # Chip select
-dc_pin = digitalio.DigitalInOut(board.D24)   # Data/Command
+cs_pin = digitalio.DigitalInOut(board.CE0)  # Chip select
+dc_pin = digitalio.DigitalInOut(board.D24)  # Data/Command
 reset_pin = digitalio.DigitalInOut(board.D25)  # Reset
 
-# Create the display
-display = st7789.ST7789(
-    spi,
-    cs=cs_pin,
-    dc=dc_pin,
-    rst=reset_pin,
+# Initialize display
+display = adafruit_st7789.ST7789(
+    spi=spi,          # Note the keyword
+    cs=cs_pin,        # Correct keyword
+    dc=dc_pin,        # Correct keyword
+    rst=reset_pin,    # Correct keyword
     width=240,
     height=320,
     rotation=90,
