@@ -8,8 +8,9 @@ def _parse_bool(val: Any) -> bool:
     return val.strip().lower() in ("1", "true", "yes", "on")
   return bool(val)
 
-TIMEOUT_MINUTES = float(os.getenv("TIMEOUT_MINUTES", "0.5"))
-DISPLAY_WIDTH = int(os.getenv("DISPLAY_WIDTH", "320"))
-DISPLAY_HEIGHT = int(os.getenv("DISPLAY_HEIGHT", "240"))
-HOST_URL = os.getenv("HOST_URL", "https://records.thejowers.com")
-USE_TFT = _parse_bool(os.getenv("USE_TFT", "false"))
+TIMEOUT_MINUTES = float("0.5")
+DISPLAY_WIDTH = int("320")
+DISPLAY_HEIGHT = int("240")
+HOST_URL = "https://records.thejowers.com"
+USE_TFT = bool("true")
+HID_DEVICE="/dev/input/event0"

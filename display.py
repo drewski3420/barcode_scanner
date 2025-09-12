@@ -18,17 +18,30 @@ def create_backend() -> DisplayBackend:
   Tries TFT (luma) if configured, otherwise falls back to a pygame-based emulator.
   """
   if config.USE_TFT:
+#     import board, digitalio, displayio, terminalio
+#     from adafruit_display_text import label
+#     from fourwire import FourWire
+#     from adafruit_st7789 import ST7789
+#     displayio.release_displays()
+#     spi = board.SPI()
+#     tft_cs = board.CE0
+#     tft_dc = board.D24
+#     reset_pin = board.D25
+#     display_bus = FourWire(spi, command=tft_dc, chip_select=tft_cs, reset=reset_pin)
+#     display = ST7789(display_bus, width=240, height=320, rotation=270, bgr=True, invert=False)
+#     return display
+#
     try:
       from luma.core.interface.serial import spi  # type: ignore
-      from luma.lcd.device import st7789, ili9341  # type: ignore
+      from luma.lcd.device import st7789  # type: ignore
 
       class TFTDisplay(DisplayBackend):
-        def __init__(self, driver: str = "st7789", width: int = config.DISPLAY_WIDTH, height: int = config.DISPLAY_HEIGHT, rotate: int = 90):
+        def __init__(self): #, width: int = config.DISPLAY_WIDTH, height: int = config.DISPLAY_HEIGHT, rotate: int = 270):
+          width_var = config.DISPLAY_WIDTH
+          height_var = config.DISPLAY_HEIGHT
+          rotate_var = 0
           serial = spi(port=0, device=0, gpio=None)
-          if driver == "st7789":
-            self.device = st7789(serial, width=width, height=height, rotate=rotate)
-          else:
-            self.device = ili9341(serial, width=width, height=height, rotate=rotate)
+          self.device = st7789(serial, width=width_var, height=height_var, rotate=rotate_var)
 
         def display(self, pil_image):
           self.device.display(pil_image)
