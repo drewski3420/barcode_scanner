@@ -1,6 +1,22 @@
 from typing import Optional
 import traceback
+import os
 import config
+
+# Backlight pin (BCM numbering). Can be set via the TFT_BACKLIGHT_PIN environment variable
+# or edited directly in this file. If unset or negative, backlight control is disabled.
+try:
+  BACKLIGHT_PIN = int(os.getenv("TFT_BACKLIGHT_PIN", "-1"))
+  if BACKLIGHT_PIN < 0:
+    BACKLIGHT_PIN = None
+except Exception:
+  BACKLIGHT_PIN = None
+
+# Try to import RPi.GPIO if available (best-effort). GPIO will be None on non-RPi systems.
+try:
+  import RPi.GPIO as GPIO  # type: ignore
+except Exception:
+  GPIO = None
 
 class DisplayBackend:
   def display(self, pil_image):
@@ -47,6 +63,19 @@ def create_backend() -> DisplayBackend:
           self.width = width_var
           self.height = height_var
 
+          # Optional backlight control using RPi.GPIO (BCM numbering).
+          # If BACKLIGHT_PIN is None or GPIO import failed, backlight control is disabled.
+          self._backlight_pin = BACKLIGHT_PIN
+          self._gpio_control = False
+          if self._backlight_pin is not None and GPIO is not None:
+            try:
+              GPIO.setmode(GPIO.BCM)
+              GPIO.setup(self._backlight_pin, GPIO.OUT, initial=GPIO.HIGH)
+              self._gpio_control = True
+            except Exception:
+              # best-effort; don't raise if GPIO isn't usable
+              self._gpio_control = False
+
         def display(self, pil_image):
           self.device.display(pil_image)
 
@@ -56,6 +85,7 @@ def create_backend() -> DisplayBackend:
           This tries, in order:
           - device.clear() if available
           - sending a black PIL image to the device
+          - turn off backlight GPIO (if configured)
           All exceptions are swallowed because quit should not raise during shutdown.
           """
           try:
@@ -69,6 +99,19 @@ def create_backend() -> DisplayBackend:
             try:
               black = Image.new("RGB", (self.width, self.height), (0, 0, 0))
               self.device.display(black)
+            except Exception:
+              pass
+            # Attempt to turn off backlight if we configured it.
+            try:
+              if getattr(self, "_gpio_control", False) and self._backlight_pin is not None and GPIO is not None:
+                try:
+                  GPIO.output(self._backlight_pin, GPIO.LOW)
+                  try:
+                    GPIO.cleanup(self._backlight_pin)
+                  except Exception:
+                    pass
+                except Exception:
+                  pass
             except Exception:
               pass
           except Exception:
