@@ -11,10 +11,10 @@ import input_hid
 # Create display backend once at runtime
 backend = create_backend()
 # Create HID scanner once at runtime (device path via HID_DEVICE env var)
-scanner = input_hid.HIDScanner(device_path=os.getenv("HID_DEVICE", None))
+scanner = input_hid.HIDScanner(device_path=config.HID_DEVICE) #os.getenv("HID_DEVICE", None))
 
 def run_main_loop():
-  print("Ready! Type a URL and press Enter (simulating QR scan)...")
+  #print("Ready! Type a URL and press Enter (simulating QR scan)...")
   running = True
   current_data = None
   last_update = None
@@ -53,7 +53,9 @@ def run_main_loop():
         var_in = None
 
       if var_in:
+        #print(f"Fetching {var_in}")
         rec = fetcher.fetch_record(var_in)
+        #print(rec)
         if rec:
           current_data = (rec.title, rec.artists, rec.section, rec.code, rec.cover_img)
           last_update = datetime.now()
