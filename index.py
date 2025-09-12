@@ -1,6 +1,8 @@
 import os
 import time
 from datetime import datetime, timedelta
+import signal
+import threading
 
 import config
 from display import create_backend
@@ -12,6 +14,14 @@ import input_hid
 backend = create_backend()
 # Create HID scanner once at runtime (device path via HID_DEVICE env var)
 scanner = input_hid.HIDScanner(device_path=config.HID_DEVICE) #os.getenv("HID_DEVICE", None))
+# Event set by signal handler so run_main_loop can exit cleanly when systemd stops the service.
+stop_event = threading.Event()
+def _handle_signal(signum, frame):
+  print(f"Received signal {signum}, shutting down.")
+  stop_event.set()
+# Ensure SIGTERM (systemd stop) and SIGINT are handled.
+signal.signal(signal.SIGTERM, _handle_signal)
+signal.signal(signal.SIGINT, _handle_signal)
 
 def run_main_loop():
   #print("Ready! Type a URL and press Enter (simulating QR scan)...")
@@ -20,7 +30,7 @@ def run_main_loop():
   last_update = None
 
   try:
-    while running:
+    while running and not stop_event.is_set():
       # Handle pygame events if applicable
       if not config.USE_TFT and hasattr(backend, "pygame"):
         for event in backend.pygame.event.get():
@@ -69,7 +79,11 @@ def run_main_loop():
   except Exception as e:
     print(f"Error in main loop: {e}")
   finally:
-    # Ensure backend cleanup if provided
+    # Ensure scanner and backend cleanup if provided. scanner.stop() is best-effort.
+    try:
+      scanner.stop()
+    except Exception:
+      pass
     try:
       backend.quit()
     except Exception:
