@@ -9,6 +9,7 @@ from display import create_backend
 import fetcher
 import ui
 import input_hid
+from flask import Flask, jsonify
 
 # Create display backend once at runtime
 backend = create_backend()
@@ -22,6 +23,34 @@ def _handle_signal(signum, frame):
 # Ensure SIGTERM (systemd stop) and SIGINT are handled.
 signal.signal(signal.SIGTERM, _handle_signal)
 signal.signal(signal.SIGINT, _handle_signal)
+
+# Simple health endpoint served in a background thread so it doesn't interfere
+# with the main display/input loop. Returns a small JSON object describing
+# whether the app appears to be running and whether the HID scanner thread is alive.
+_health_app = Flask(__name__)
+
+@_health_app.route("/health")
+def _health():
+  try:
+    scanner_alive = getattr(scanner, "_thread", None) is not None and scanner._thread.is_alive()
+  except Exception:
+    scanner_alive = False
+  backend_name = getattr(getattr(backend, "__class__", None), "__name__", None)
+  return jsonify({
+    "status": "ok" if not stop_event.is_set() else "stopping",
+    "running": not stop_event.is_set(),
+    "scanner_alive": scanner_alive,
+    "backend": backend_name,
+    "pid": os.getpid()
+  })
+
+def _run_health_server():
+  # Run a small threaded Flask server on port 8000 bound to all interfaces.
+  # Use threaded=True to allow concurrent requests; runs in a daemon thread.
+  _health_app.run(host="0.0.0.0", port=8000, threaded=True)
+
+_health_thread = threading.Thread(target=_run_health_server, daemon=True)
+_health_thread.start()
 
 def run_main_loop():
   #print("Ready! Type a URL and press Enter (simulating QR scan)...")
