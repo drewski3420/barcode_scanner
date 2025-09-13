@@ -34,19 +34,6 @@ def create_backend() -> DisplayBackend:
   Tries TFT (luma) if configured, otherwise falls back to a pygame-based emulator.
   """
   if config.USE_TFT:
-#     import board, digitalio, displayio, terminalio
-#     from adafruit_display_text import label
-#     from fourwire import FourWire
-#     from adafruit_st7789 import ST7789
-#     displayio.release_displays()
-#     spi = board.SPI()
-#     tft_cs = board.CE0
-#     tft_dc = board.D24
-#     reset_pin = board.D25
-#     display_bus = FourWire(spi, command=tft_dc, chip_select=tft_cs, reset=reset_pin)
-#     display = ST7789(display_bus, width=240, height=320, rotation=270, bgr=True, invert=False)
-#     return display
-#
     try:
       from luma.core.interface.serial import spi  # type: ignore
       from luma.lcd.device import st7789  # type: ignore
