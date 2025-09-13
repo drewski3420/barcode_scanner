@@ -5,12 +5,6 @@ import config
 
 # Backlight pin (BCM numbering). Can be set via the TFT_BACKLIGHT_PIN environment variable
 # or edited directly in this file. If unset or negative, backlight control is disabled.
-try:
-  BACKLIGHT_PIN = int(os.getenv("TFT_BACKLIGHT_PIN", "-1"))
-  if BACKLIGHT_PIN < 0:
-    BACKLIGHT_PIN = None
-except Exception:
-  BACKLIGHT_PIN = None
 
 # Try to import RPi.GPIO if available (best-effort). GPIO will be None on non-RPi systems.
 try:
@@ -43,7 +37,9 @@ def create_backend() -> DisplayBackend:
         def __init__(self): #, width: int = config.DISPLAY_WIDTH, height: int = config.DISPLAY_HEIGHT, rotate: int = 270):
           width_var = config.DISPLAY_WIDTH
           height_var = config.DISPLAY_HEIGHT
-          rotate_var = 0
+          rotate_var = config.DISPLAY_ROTATION
+          self._backlight_pin = config.TFT_BACKLIGHT_PIN
+          if self._backlight_pin == 0: self_backlight_pin = None
           serial = spi(port=0, device=0, gpio=None)
           self.device = st7789(serial, width=width_var, height=height_var, rotate=rotate_var)
           # store size for use when clearing on quit
@@ -52,7 +48,6 @@ def create_backend() -> DisplayBackend:
 
           # Optional backlight control using RPi.GPIO (BCM numbering).
           # If BACKLIGHT_PIN is None or GPIO import failed, backlight control is disabled.
-          self._backlight_pin = BACKLIGHT_PIN
           self._gpio_control = False
           if self._backlight_pin is not None and GPIO is not None:
             try:

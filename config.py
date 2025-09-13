@@ -11,6 +11,8 @@ def _parse_bool(val: Any) -> bool:
 TIMEOUT_MINUTES = float("0.5")
 DISPLAY_WIDTH = int("320")
 DISPLAY_HEIGHT = int("240")
+DISPLAY_ROTATION = int("2") # (0, 1=90, 2=180, 3=270)
 HOST_URL = "https://records.thejowers.com"
 USE_TFT = bool("true")
 HID_DEVICE="/dev/input/event0"
+TFT_BACKLIGHT_PIN = -1
