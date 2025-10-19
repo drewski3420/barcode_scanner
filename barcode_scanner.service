@@ -1,0 +1,16 @@
+[Unit]
+Description=Barcode Scanner Service
+After=network.target
+
+[Service]
+ExecStart=/home/drew/barcode_scanner/.venv/bin/python3 -u /home/drew/barcode_scanner/index.py
+WorkingDirectory=/home/drew/barcode_scanner
+Restart=always
+RestartSec=5
+User=drew
+Environment=SDL_AUDIODRIVER=dummy
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
