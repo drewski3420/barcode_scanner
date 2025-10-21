@@ -1,16 +1,10 @@
-from typing import Optional
 import traceback
-import os
 import config
 
-# Backlight pin (BCM numbering). Can be set via the TFT_BACKLIGHT_PIN environment variable
-# or edited directly in this file. If unset or negative, backlight control is disabled.
-
-# Try to import RPi.GPIO if available (best-effort). GPIO will be None on non-RPi systems.
-try:
-  import RPi.GPIO as GPIO  # type: ignore
-except Exception:
-  GPIO = None
+from RPi import GPIO
+from luma.core.interface.serial import spi
+from luma.lcd.device import st7789
+from PIL import Image, ImageDraw
 
 class DisplayBackend:
   def display(self, pil_image):
@@ -22,123 +16,37 @@ class DisplayBackend:
     return None
 
 def create_backend() -> DisplayBackend:
-  """
-  Create and return a suitable DisplayBackend instance.
+  GPIO.setwarnings(False)
+  GPIO.setmode(GPIO.BCM)
 
-  Tries TFT (luma) if configured, otherwise falls back to a pygame-based emulator.
-  """
-  if config.USE_TFT:
-    try:
-      from luma.core.interface.serial import spi  # type: ignore
-      from luma.lcd.device import st7789  # type: ignore
-      from PIL import Image
+  class TFTDisplay(DisplayBackend):
+    def __init__(self):
+      width_var = config.DISPLAY_WIDTH
+      height_var = config.DISPLAY_HEIGHT
+      rotate_var = config.DISPLAY_ROTATION
+      dc_pin = config.DC_PIN
+      rst_pin = config.RST_PIN
+      serial = spi(port=0, device=0, gpio=GPIO, bus_speed_hz=8000000, gpio_DC=dc_pin, gpio_RST=rst_pin)
+      self.device = st7789(serial_interface=serial, width=width_var, height=height_var, rotate=rotate_var)
 
-      class TFTDisplay(DisplayBackend):
-        def __init__(self): #, width: int = config.DISPLAY_WIDTH, height: int = config.DISPLAY_HEIGHT, rotate: int = 270):
-          width_var = config.DISPLAY_WIDTH
-          height_var = config.DISPLAY_HEIGHT
-          rotate_var = config.DISPLAY_ROTATION
-          self._backlight_pin = config.TFT_BACKLIGHT_PIN
-          if self._backlight_pin == 0: self_backlight_pin = None
-          serial = spi(port=0, device=0, gpio=None)
-          self.device = st7789(serial, width=width_var, height=height_var, rotate=rotate_var)
-          # store size for use when clearing on quit
-          self.width = width_var
-          self.height = height_var
+    def display(self, pil_image):
+      self.device.display(pil_image)
 
-          # Optional backlight control using RPi.GPIO (BCM numbering).
-          # If BACKLIGHT_PIN is None or GPIO import failed, backlight control is disabled.
-          self._gpio_control = False
-          if self._backlight_pin is not None and GPIO is not None:
-            try:
-              GPIO.setmode(GPIO.BCM)
-              GPIO.setup(self._backlight_pin, GPIO.OUT, initial=GPIO.HIGH)
-              self._gpio_control = True
-            except Exception:
-              # best-effort; don't raise if GPIO isn't usable
-              self._gpio_control = False
-
-        def display(self, pil_image):
-          self.device.display(pil_image)
-
-        def quit(self):
-          """Attempt to clear the hardware display before exiting.
-
-          This tries, in order:
-          - device.clear() if available
-          - sending a black PIL image to the device
-          - turn off backlight GPIO (if configured)
-          All exceptions are swallowed because quit should not raise during shutdown.
-          """
+    def quit(self):
+      """Attempt to clear the hardware display before exiting."""
+      try:
+      # If the underlying device provides a clear method, prefer that.
+        if hasattr(self.device, "clear"):
           try:
-            # If the underlying device provides a clear method, prefer that.
-            if hasattr(self.device, "clear"):
-              try:
-                self.device.clear()
-              except Exception:
-                pass
-            # Send a black image to ensure the panel is blanked.
-            try:
-              black = Image.new("RGB", (self.width, self.height), (0, 0, 0))
-              self.device.display(black)
-            except Exception:
-              pass
-            # Attempt to turn off backlight if we configured it.
-            try:
-              if getattr(self, "_gpio_control", False) and self._backlight_pin is not None and GPIO is not None:
-                try:
-                  GPIO.output(self._backlight_pin, GPIO.LOW)
-                  try:
-                    GPIO.cleanup(self._backlight_pin)
-                  except Exception:
-                    pass
-                except Exception:
-                  pass
-            except Exception:
-              pass
+            self.device.clear()
           except Exception:
             pass
-
-      return TFTDisplay()
-    except Exception as e:
-      # Fall back to pygame if TFT initialization fails.
-      print(f"Warning: failed to initialize TFT backend: {e}; falling back to pygame.")
-      traceback.print_exc()
-
-  # Pygame backend
-  try:
-    import pygame  # type: ignore
-
-    class PygameDisplay(DisplayBackend):
-      def __init__(self, width: int = config.DISPLAY_WIDTH, height: int = config.DISPLAY_HEIGHT):
-        pygame.init()
-        self.screen = pygame.display.set_mode((width, height))
-        pygame.display.set_caption("TFT Emulator")
-        self.width = width
-        self.height = height
-        self.pygame = pygame
-
-      def display(self, pil_image):
-        mode = pil_image.mode
-        size = pil_image.size
-        data = pil_image.tobytes()
-        surf = self.pygame.image.fromstring(data, size, mode).convert()
-        self.screen.blit(surf, (0, 0))
-        self.pygame.display.flip()
-
-      def quit(self):
+        # Send a black image to ensure the panel is blanked.
         try:
-          # Blank the pygame window before quitting so an emulator window doesn't
-          # leave visible content after the process exits.
-          try:
-            self.screen.fill((0, 0, 0))
-            self.pygame.display.flip()
-          except Exception:
-            pass
-          self.pygame.quit()
+          black = Image.new("RGB", (width_var, height_var), (0, 0, 0))
+          self.device.display(black)
         except Exception:
           pass
-
-    return PygameDisplay()
-  except Exception as e:
-    raise RuntimeError(f"No suitable display backend available: {e}")
+      except Exception:
+        pass
+  return TFTDisplay()
