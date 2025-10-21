@@ -59,7 +59,7 @@ def draw_idle():
   img = Image.new("RGB", (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), "black")
   draw = ImageDraw.Draw(img)
   now = datetime.now().strftime("%H:%M")
-  img.paste(top_bar_gradient(10), (0, 0))
+  img.paste(top_bar_gradient(20), (0, 0))
   draw.text((5, 2), now, font=font_small, fill="white")
   return img
 
