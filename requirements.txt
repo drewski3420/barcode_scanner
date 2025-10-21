@@ -7,3 +7,4 @@ pygame
 luma
 RPi.GPIO
 evdev
+spidev
