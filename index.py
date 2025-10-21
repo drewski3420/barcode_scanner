@@ -3,6 +3,7 @@ import time
 from datetime import datetime, timedelta
 import signal
 import threading
+import traceback
 
 import config
 from display import create_backend
@@ -60,11 +61,6 @@ def run_main_loop():
 
   try:
     while running and not stop_event.is_set():
-      # Handle pygame events if applicable
-      if not config.USE_TFT and hasattr(backend, "pygame"):
-        for event in backend.pygame.event.get():
-          if event.type == backend.pygame.QUIT:
-            running = False
 
       # Timeout handling: fade to idle and clear state
       if current_data and last_update:
@@ -106,7 +102,7 @@ def run_main_loop():
   except KeyboardInterrupt:
     pass
   except Exception as e:
-    print(f"Error in main loop: {e}")
+    print(f"Error in main loop: {traceback.format_exc()}")
   finally:
     # Ensure scanner and backend cleanup if provided. scanner.stop() is best-effort.
     try:
