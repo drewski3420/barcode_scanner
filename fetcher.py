@@ -27,7 +27,7 @@ def fetch_record(input_str: str) -> Optional[Record]:
     Given a short code (6 chars) or a full URL, fetch the record metadata and cover.
     Returns a Record instance or None on failure.
     """
-    #print(f"Inside fetch records: {input_str=}")
+    print(f"Inside fetch records: {input_str=}")
     try:
         if len(input_str) > 6:
             cd = input_str[-6:]
@@ -50,5 +50,5 @@ def fetch_record(input_str: str) -> Optional[Record]:
 
         return Record(title=title, artists=artists, section=section, code=code, cover_path=cover_path, cover_img=cover_img)
     except Exception:
-        #print(traceback.format_exc())
+        print(traceback.format_exc())
         return None

@@ -88,9 +88,9 @@ def run_main_loop():
         var_in = None
 
       if var_in:
-        #print(f"Fetching {var_in}")
+        print(f"Fetching {var_in}")
         rec = fetcher.fetch_record(var_in)
-        #print(rec)
+        print(rec)
         if rec:
           current_data = (rec.title, rec.artists, rec.section, rec.code, rec.cover_img)
           last_update = datetime.now()
