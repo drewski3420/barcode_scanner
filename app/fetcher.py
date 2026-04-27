@@ -9,6 +9,7 @@ import requests
 from PIL import Image
 
 import config
+import log
 from model import Record
 import traceback
 
@@ -27,20 +28,20 @@ def fetch_record(input_str: str) -> Optional[Record]:
     Given a short code (6 chars) or a full URL, fetch the record metadata and cover.
     Returns a Record instance or None on failure.
     """
-    #print(f"Inside fetch records: {input_str=}")
+    log.print_to_log(f"Inside fetch records: {input_str=}")
     try:
         if len(input_str) > 6:
             cd = input_str[-6:]
         else:
             cd = input_str
-        print(f"Fetching record: {cd}")
+        log.print_to_log(f"Fetching record: {cd}")
         resp = requests.get(f"{config.HOST_URL}/plays/scan/{cd}", timeout=5)
         resp.raise_for_status()
         data = resp.json().get("record", {}) or {}
         if not data:
             return None
 
-        print(data)
+        log.print_to_log(data)
         title = data.get("title", "Unknown Album")
         artists = data.get("artists", "Unknown Artist")
         section = data.get("section", "N/A")
@@ -50,5 +51,5 @@ def fetch_record(input_str: str) -> Optional[Record]:
 
         return Record(title=title, artists=artists, section=section, code=code, cover_path=cover_path, cover_img=cover_img)
     except Exception:
-        #print(traceback.format_exc())
+        log.print_to_log(traceback.format_exc())
         return None
