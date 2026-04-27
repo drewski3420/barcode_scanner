@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont
 from datetime import datetime
 import time
 import config
+import log
 
 def load_font(path: str, size: int):
   try:
@@ -75,7 +76,7 @@ def fade_to_idle(current_img, backend, steps=10, duration=0.5):
       backend.display(blended)
       time.sleep(duration / steps)
   except Exception as e:
-    print(f"fade_to_idle error: {e}")
+    log.print_to_log(f"fade_to_idle error: {e}")
 
 def display_album(album, artist, section, code, cover_img=None):
   img = Image.new("RGB", (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), "black")

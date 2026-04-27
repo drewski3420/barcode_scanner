@@ -4,8 +4,11 @@ from datetime import datetime, timedelta
 import signal
 import threading
 import traceback
+import urllib.request
+import urllib.error
 
 import config
+import log
 from display import create_backend
 import fetcher
 import ui
@@ -19,7 +22,7 @@ scanner = input_hid.HIDScanner(device_path=config.HID_DEVICE) #os.getenv("HID_DE
 # Event set by signal handler so run_main_loop can exit cleanly when systemd stops the service.
 stop_event = threading.Event()
 def _handle_signal(signum, frame):
-  print(f"Received signal {signum}, shutting down.")
+  log.print_to_log(f"Received signal {signum}, shutting down.")
   stop_event.set()
 # Ensure SIGTERM (systemd stop) and SIGINT are handled.
 signal.signal(signal.SIGTERM, _handle_signal)
@@ -53,14 +56,47 @@ def _run_health_server():
 _health_thread = threading.Thread(target=_run_health_server, daemon=True)
 _health_thread.start()
 
+def _check_records_url():
+  url = "https://records.thejowers.com"
+  try:
+    with urllib.request.urlopen(url, timeout=10) as response:
+      status_code = getattr(response, "status", None) or response.getcode()
+      if status_code == 200:
+        print(f"URL check OK: url={url} status={status_code}")
+      else:
+        print(f"URL check NOT OK: url={url} status={status_code}")
+  except urllib.error.HTTPError as e:
+    print(f"URL check NOT OK: url={url} status={e.code} error={e}")
+  except Exception as e:
+    print(f"URL check NOT OK: url={url} error={type(e).__name__}: {e}")
+
 def run_main_loop():
-  #print("Ready! Type a URL and press Enter (simulating QR scan)...")
+  log.print_to_log("Ready! Type a URL and press Enter (simulating QR scan)...")
   running = True
   current_data = None
   last_update = None
+  last_heartbeat = None
+  heartbeat_interval_seconds = 60
 
   try:
     while running and not stop_event.is_set():
+      now = datetime.now()
+
+      if (
+        last_heartbeat is None or
+        (now - last_heartbeat).total_seconds() >= heartbeat_interval_seconds
+      ):
+        try:
+          scanner_alive = getattr(scanner, "_thread", None) is not None and scanner._thread.is_alive()
+        except Exception:
+          scanner_alive = False
+        backend_name = getattr(getattr(backend, "__class__", None), "__name__", None)
+        print(
+          f"App heartbeat: running=True pid={os.getpid()} "
+          f"scanner_alive={scanner_alive} backend={backend_name}"
+        )
+        _check_records_url()
+        last_heartbeat = now
 
       # Timeout handling: fade to idle and clear state
       if current_data and last_update:
@@ -70,7 +106,7 @@ def run_main_loop():
             curr_img = ui.display_album(album, artist, section, code, cover_img)
             ui.fade_to_idle(curr_img, backend)
           except Exception as e:
-            print(f"Error during fade to idle: {e}")
+            log.print_to_log(f"Error during fade to idle: {e}")
           current_data = None
           last_update = None
 
@@ -88,21 +124,21 @@ def run_main_loop():
         var_in = None
 
       if var_in:
-        print(f"Fetching {var_in}")
+        log.print_to_log(f"Fetching {var_in}")
         rec = fetcher.fetch_record(var_in)
-        print(rec)
+        log.print_to_log(rec)
         if rec:
           current_data = (rec.title, rec.artists, rec.section, rec.code, rec.cover_img)
           last_update = datetime.now()
         else:
-          print("Failed to fetch record for input:", var_in)
+          log.print_to_log("Failed to fetch record for input:", var_in)
           current_data = None
 
       time.sleep(0.1)
   except KeyboardInterrupt:
     pass
   except Exception as e:
-    print(f"Error in main loop: {traceback.format_exc()}")
+    log.print_to_log(f"Error in main loop: {traceback.format_exc()}")
   finally:
     # Ensure scanner and backend cleanup if provided. scanner.stop() is best-effort.
     try:
