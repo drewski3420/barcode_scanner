@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import signal
 import threading
 import traceback
+import urllib.request
+import urllib.error
 
 import config
 from display import create_backend
@@ -53,14 +55,47 @@ def _run_health_server():
 _health_thread = threading.Thread(target=_run_health_server, daemon=True)
 _health_thread.start()
 
+def _check_records_url():
+  url = "https://records.thejowers.com"
+  try:
+    with urllib.request.urlopen(url, timeout=10) as response:
+      status_code = getattr(response, "status", None) or response.getcode()
+      if status_code == 200:
+        print(f"[{datetime.now().isoformat()}] URL check OK: url={url} status={status_code}")
+      else:
+        print(f"[{datetime.now().isoformat()}] URL check NOT OK: url={url} status={status_code}")
+  except urllib.error.HTTPError as e:
+    print(f"[{datetime.now().isoformat()}] URL check NOT OK: url={url} status={e.code} error={e}")
+  except Exception as e:
+    print(f"[{datetime.now().isoformat()}] URL check NOT OK: url={url} error={type(e).__name__}: {e}")
+
 def run_main_loop():
   #print("Ready! Type a URL and press Enter (simulating QR scan)...")
   running = True
   current_data = None
   last_update = None
+  last_heartbeat = None
+  heartbeat_interval_seconds = 60
 
   try:
     while running and not stop_event.is_set():
+      now = datetime.now()
+
+      if (
+        last_heartbeat is None or
+        (now - last_heartbeat).total_seconds() >= heartbeat_interval_seconds
+      ):
+        try:
+          scanner_alive = getattr(scanner, "_thread", None) is not None and scanner._thread.is_alive()
+        except Exception:
+          scanner_alive = False
+        backend_name = getattr(getattr(backend, "__class__", None), "__name__", None)
+        print(
+          f"[{now.isoformat()}] App heartbeat: running=True pid={os.getpid()} "
+          f"scanner_alive={scanner_alive} backend={backend_name}"
+        )
+        _check_records_url()
+        last_heartbeat = now
 
       # Timeout handling: fade to idle and clear state
       if current_data and last_update:
