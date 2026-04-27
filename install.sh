@@ -6,6 +6,8 @@
 #python -m venv .venv
 #source .venv/bin/activate
 #pip3 install -r requirements.txt
+#mkir logs
+#touch logs.logs.log
 
 # subsequent
 sudo cp barcode_scanner.service /etc/systemd/system/.
@@ -14,3 +16,5 @@ sudo systemctl enable barcode_scanner
 sudo systemctl restart barcode_scanner
 
 sudo systemctl status barcode_scanner.service --no-pager
+
+
