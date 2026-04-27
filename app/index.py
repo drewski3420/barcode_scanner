@@ -61,16 +61,16 @@ def _check_records_url():
     with urllib.request.urlopen(url, timeout=10) as response:
       status_code = getattr(response, "status", None) or response.getcode()
       if status_code == 200:
-        print(f"[{datetime.now().isoformat()}] URL check OK: url={url} status={status_code}")
+        print(f"URL check OK: url={url} status={status_code}")
       else:
-        print(f"[{datetime.now().isoformat()}] URL check NOT OK: url={url} status={status_code}")
+        print(f"URL check NOT OK: url={url} status={status_code}")
   except urllib.error.HTTPError as e:
-    print(f"[{datetime.now().isoformat()}] URL check NOT OK: url={url} status={e.code} error={e}")
+    print(f"URL check NOT OK: url={url} status={e.code} error={e}")
   except Exception as e:
-    print(f"[{datetime.now().isoformat()}] URL check NOT OK: url={url} error={type(e).__name__}: {e}")
+    print(f"URL check NOT OK: url={url} error={type(e).__name__}: {e}")
 
 def run_main_loop():
-  #print("Ready! Type a URL and press Enter (simulating QR scan)...")
+#  print("Ready! Type a URL and press Enter (simulating QR scan)...")
   running = True
   current_data = None
   last_update = None
@@ -91,7 +91,7 @@ def run_main_loop():
           scanner_alive = False
         backend_name = getattr(getattr(backend, "__class__", None), "__name__", None)
         print(
-          f"[{now.isoformat()}] App heartbeat: running=True pid={os.getpid()} "
+          f"App heartbeat: running=True pid={os.getpid()} "
           f"scanner_alive={scanner_alive} backend={backend_name}"
         )
         _check_records_url()
@@ -123,9 +123,9 @@ def run_main_loop():
         var_in = None
 
       if var_in:
-        #print(f"Fetching {var_in}")
+        print(f"Fetching {var_in}")
         rec = fetcher.fetch_record(var_in)
-        #print(rec)
+        print(rec)
         if rec:
           current_data = (rec.title, rec.artists, rec.section, rec.code, rec.cover_img)
           last_update = datetime.now()
