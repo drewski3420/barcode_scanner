@@ -62,13 +62,13 @@ def _check_records_url():
     with urllib.request.urlopen(url, timeout=10) as response:
       status_code = getattr(response, "status", None) or response.getcode()
       if status_code == 200:
-        print(f"URL check OK: url={url} status={status_code}")
+        log.print_to_log(f"URL check OK: url={url} status={status_code}")
       else:
-        print(f"URL check NOT OK: url={url} status={status_code}")
+        log.print_to_log(f"URL check NOT OK: url={url} status={status_code}")
   except urllib.error.HTTPError as e:
-    print(f"URL check NOT OK: url={url} status={e.code} error={e}")
+    log.print_to_log(f"URL check NOT OK: url={url} status={e.code} error={e}")
   except Exception as e:
-    print(f"URL check NOT OK: url={url} error={type(e).__name__}: {e}")
+    log.print_to_log(f"URL check NOT OK: url={url} error={type(e).__name__}: {e}")
 
 def run_main_loop():
   log.print_to_log("Ready! Type a URL and press Enter (simulating QR scan)...")
@@ -91,7 +91,7 @@ def run_main_loop():
         except Exception:
           scanner_alive = False
         backend_name = getattr(getattr(backend, "__class__", None), "__name__", None)
-        print(
+        log.print_to_log(
           f"App heartbeat: running=True pid={os.getpid()} "
           f"scanner_alive={scanner_alive} backend={backend_name}"
         )
