@@ -11,4 +11,6 @@
 sudo cp barcode_scanner.service /etc/systemd/system/.
 sudo systemctl daemon-reload
 sudo systemctl enable barcode_scanner
-sudo systemctl start barcode_scanner
+sudo systemctl restart barcode_scanner
+
+sudo systemctl status barcode_scanner.service --no-pager

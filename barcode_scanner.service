@@ -4,15 +4,19 @@ After=network.target
 
 [Service]
 #[Service]
-ExecStart=/bin/bash -c '/home/drew/barcode_scanner/.venv/bin/python3 -u /home/drew/barcode_scanner/app/index.py 2>&1 | ts "%Y-%m-%d %H:%M:%S" >> /home/drew/barcode_scanner/logs/logs.log'
+#ExecStart=/bin/bash -c '/home/drew/barcode_scanner/.venv/bin/python3 -u /home/drew/barcode_scanner/app/index.py 2>&1 | ts \"%Y-%m-%d %H:%M:%S\" >> /home/drew/barcode_scanner/logs/logs.log'
+#ExecStart=/bin/bash -c '/home/drew/barcode_scanner/.venv/bin/python3 -u /home/drew/barcode_scanner/app/index.py 2>&1 | ts "%Y-%m-%d %H:%M:%S" >> /home/drew/barcode_scanner/logs/logs.log'
 #ExecStart=/home/drew/barcode_scanner/.venv/bin/python3 -u /home/drew/barcode_scanner/index.py
+ExecStart=/home/drew/barcode_scanner/.venv/bin/python3 -u /home/drew/barcode_scanner/app/index.py
+StandardOutput=append:/home/drew/barcode_scanner/logs/logs.log
+StandardError=append:/home/drew/barcode_scanner/logs/logs.log
 WorkingDirectory=/home/drew/barcode_scanner
 Restart=always
 RestartSec=5
 User=drew
 Environment=SDL_AUDIODRIVER=dummy
-StandardOutput=journal
-StandardError=journal
+#StandardOutput=journal
+#StandardError=journal
 
 [Install]
 WantedBy=multi-user.target
