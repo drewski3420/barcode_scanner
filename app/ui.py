@@ -11,7 +11,7 @@ def load_font(path: str, size: int):
     return ImageFont.load_default()
 
 
-font_huge = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 28)
+font_code = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 22)
 font_big = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 16)
 font_small = load_font("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 12)
 
@@ -78,7 +78,7 @@ def fade_to_idle(current_img, backend, steps=10, duration=0.5):
   except Exception as e:
     log.print_to_log(f"fade_to_idle error: {e}")
 
-def display_album(album, artist, section, code, cover_img=None):
+def display_album(album, artist, section, code, last_played=None, cover_img=None):
   img = Image.new("RGB", (config.DISPLAY_WIDTH, config.DISPLAY_HEIGHT), "black")
   draw = ImageDraw.Draw(img)
   now = datetime.now().strftime("%H:%M")
@@ -92,10 +92,15 @@ def display_album(album, artist, section, code, cover_img=None):
   draw.text((config.DISPLAY_WIDTH - 10 - text_w, config.DISPLAY_HEIGHT - 18), section_text, font=font_small, fill="white")
   y_start = 40
   spacing = 30
+
   draw.text((10, y_start), f"{album}", font=font_big, fill="white")
   draw.text((10, y_start + spacing), f"{artist}", font=font_big, fill="white")
-  draw.text((10, y_start + 4 * spacing), f"{code}", font=font_huge, fill="white")
-
+  
+  if last_played:
+      last_played_text = f"Last Play: {last_played.month}/{last_played.day}/{last_played.year}"
+      draw.text((10, y_start + 2 * spacing), last_played_text, font=font_small, fill="lightgray")
+  draw.text((10, y_start + 4 * spacing), f"{code}", font=font_code, fill="white")
+  
   if cover_img:
     cover_img = cover_img.resize((120, 120))
     x_cover = config.DISPLAY_WIDTH - 120 - 10
