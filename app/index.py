@@ -57,7 +57,7 @@ _health_thread = threading.Thread(target=_run_health_server, daemon=True)
 _health_thread.start()
 
 def _check_records_url():
-  url = "https://records.thejowers.com"
+  url = config.HOST_URL
   try:
     with urllib.request.urlopen(url, timeout=10) as response:
       status_code = getattr(response, "status", None) or response.getcode()
