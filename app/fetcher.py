@@ -46,6 +46,7 @@ def fetch_record(input_str: str) -> Optional[Record]:
         artists = data.get("artists", "Unknown Artist")
         section = data.get("section", "N/A")
         code = data.get("code", "XXXXXX")
+        last_play = date.get("last_play", None)
         cover_path = data.get("cover_path")
         cover_img = fetch_cover(f"{config.HOST_URL}{cover_path}") if cover_path else None
 
