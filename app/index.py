@@ -128,7 +128,7 @@ def run_main_loop():
         rec = fetcher.fetch_record(var_in)
         log.print_to_log(rec)
         if rec:
-          current_data = (rec.title, rec.artists, rec.section, rec.code, rec.cover_img)
+          current_data = (rec.title, rec.artists, rec.section, rec.code, rec.last_play, rec.cover_img)
           last_update = datetime.now()
         else:
           log.print_to_log("Failed to fetch record for input:", var_in)
